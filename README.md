@@ -8,7 +8,7 @@ Production-ready backend for an AI-powered **Point of Sale (POS)** and **Invento
 |-------|------------|
 | Runtime | Java 21 |
 | Framework | Spring Boot 3.4 |
-| Build | Maven |
+| Build | Gradle (Groovy DSL) |
 | Database | PostgreSQL 16 |
 | ORM | Spring Data JPA (Hibernate) |
 | Security | Spring Security + JWT |
@@ -40,8 +40,8 @@ Each module contains: `controller`, `service`, `service/impl`, `repository`, `en
 
 ### Prerequisites
 
-- Java 21+
-- Maven 3.9+ (or use `./mvnw`)
+- Java 21+ for the application (Gradle toolchain auto-provisions JDK 21 if needed)
+- **Gradle 9.6+** to sync/build with **Java 25** as the Gradle JVM (IntelliJ: **Settings → Build Tools → Gradle → Gradle JVM**)
 - Docker & Docker Compose (optional)
 
 ### Run with Docker Compose
@@ -66,7 +66,14 @@ docker compose up postgres -d
 2. Run the application:
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+./gradlew bootRun --args='--spring.profiles.active=local'
+```
+
+Or build and run the JAR:
+
+```bash
+./gradlew bootJar
+java -jar build/libs/ai-retail-suite.jar --spring.profiles.active=local
 ```
 
 ## Default Credentials
@@ -153,12 +160,45 @@ MAIL_FROM, RESET_PASSWORD_URL
 ## Testing
 
 ```bash
-./mvnw test
+./gradlew test
 ```
 
 Test coverage includes:
 - Unit tests: `AuthServiceTest`, `CompanyServiceTest`, `JwtTokenProviderTest`
 - Integration tests: `CompanyControllerIntegrationTest` (Testcontainers PostgreSQL)
+
+## IntelliJ IDEA
+
+Shared run configurations are in `.run/` and appear in the run dropdown after opening the project.
+
+### One-time setup
+
+1. **File → Open** → select the project folder (or `build.gradle`).
+2. Import as a **Gradle** project.
+3. Set **Project SDK** to **Java 21** (**File → Project Structure → Project**).
+4. Set **Gradle JVM** to **Java 25** (or Java 17/21/23) — **Settings → Build, Execution, Deployment → Build Tools → Gradle → Gradle JVM**. Use **Java 25** only with Gradle **9.6+** (included in this project).
+5. Enable annotation processing: **Settings → Build, Execution, Deployment → Compiler → Annotation Processors → Enable annotation processing**.
+6. Install plugins if needed: **Spring Boot**, **Docker** (for Docker run configs).
+
+### Run / Debug configurations
+
+| Configuration | Use case |
+|---------------|----------|
+| **AiRetailSuite (local)** | Daily dev — `local` profile, DB at `localhost:5432` |
+| **AiRetailSuite (dev)** | `dev` profile with `DB_*` environment variables |
+| **Docker Postgres** | Start only PostgreSQL via Docker Compose |
+| **Docker Compose (full stack)** | Start app + PostgreSQL in Docker |
+| **Gradle Test** | Run all tests |
+
+### Typical local workflow
+
+1. Run **Docker Postgres** (or `docker compose up postgres -d`).
+2. **Run** or **Debug** **AiRetailSuite (local)** from the toolbar.
+3. Open http://localhost:8080/api/swagger-ui.html
+
+Use the **Debug** button (or `⌃D` / `Ctrl+D`) to hit breakpoints in services and controllers.
+
+If **Module** is unresolved after import, edit the run config and set it to `ai-retail-suite.main`.
 
 ## Database Migrations
 
@@ -177,10 +217,24 @@ src/main/resources/
   application-{local,dev,test,prod}.properties
   db/migration/
 src/test/java/
+build.gradle
+settings.gradle
+gradle.properties
+gradlew
 Dockerfile
 docker-compose.yml
-pom.xml
 ```
+
+## Common Gradle Commands
+
+| Command | Description |
+|---------|-------------|
+| `./gradlew bootRun` | Run the application |
+| `./gradlew bootRun --args='--spring.profiles.active=local'` | Run with `local` profile |
+| `./gradlew bootJar` | Build executable JAR |
+| `./gradlew test` | Run tests |
+| `./gradlew clean build` | Clean and full build |
+| `./gradlew dependencies` | Show dependency tree |
 
 ## License
 

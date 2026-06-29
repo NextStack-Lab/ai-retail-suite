@@ -2,12 +2,14 @@ FROM eclipse-temurin:21-jdk-alpine AS build
 
 WORKDIR /app
 
-COPY pom.xml .
+COPY gradlew .
+COPY gradle gradle
+COPY build.gradle settings.gradle gradle.properties ./
 COPY src ./src
 
-RUN apk add --no-cache maven && \
-    mvn clean package -DskipTests -q && \
-    mv target/*.jar app.jar
+RUN chmod +x gradlew && \
+    ./gradlew bootJar -x test --no-daemon -q && \
+    cp build/libs/ai-retail-suite.jar app.jar
 
 FROM eclipse-temurin:21-jre-alpine
 
